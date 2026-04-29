@@ -19,19 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Industry Practice: Use 'uv' for extremely fast CI runs
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          enable-cache: true
-          cache-dependency-glob: "requirements.txt"
+          enable-cache: true 
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      # Industry Best Practice: Use --frozen to ensure the lockfile is respected
       - name: Install dependencies
-        run: |
-          uv sync --freeze --no-dev
+        run: uv sync --frozen
 
       - name: Lint with flake8
         run: |
@@ -39,5 +37,4 @@ jobs:
           uv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Test with pytest
-        run: |
-          uv run pytest
+        run: uv run pytest
