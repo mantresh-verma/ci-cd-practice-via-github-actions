@@ -12,15 +12,26 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: github-actions-mastery
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }} # Ye automatically "username/repo-name" le lega
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      python_versions: ${{ steps.set-versions.outputs.versions }}
+    steps:
+      - id: set-versions
+        run: echo "versions=[\"3.10\", \"3.11\", \"3.12\"]" >> $GITHUB_OUTPUT
+
   test:
+    needs: prepare
     name: Run Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false 
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ${{ fromJson(needs.prepare.outputs.python_versions) }}
 
     steps:
       - name: Checkout code
@@ -45,7 +56,6 @@ jobs:
       - name: Test with pytest
         run: uv run pytest
 
-      # Naya Step: Ek summary file banana
       - name: Create Test Summary
         run: |
           echo "Test Run Summary" > summary.txt
@@ -53,7 +63,6 @@ jobs:
           echo "Status: Success" >> summary.txt
           echo "Date: $(date)" >> summary.txt
 
-      # Artifact Upload: File ko GitHub par save karna
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         with:
@@ -73,6 +82,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     
+    # GHCR ke liye permissions dena zaroori hai
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -80,20 +94,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha
+            type=ref,event=branch
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
