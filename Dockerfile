@@ -1,8 +1,8 @@
 # Industry Standard: Use a slim image for smaller size
 FROM python:3.11-slim
 
-# Install uv
-COPY --from=astral-sh/setup-uv:latest /uv /uvx /bin/
+## Install uv (using the official image from GHCR)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Set the working directory
 WORKDIR /app
