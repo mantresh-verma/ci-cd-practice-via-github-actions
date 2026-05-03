@@ -1,22 +1,29 @@
-# Industry Standard: Use a slim image for smaller size
-FROM python:3.11-slim
+# Stage 1: Builder
+FROM python:3.11-slim AS builder
 
-## Install uv (using the official image from GHCR)
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Set the working directory
 WORKDIR /app
-
-# Copy the project files
 COPY . .
 
-# Install dependencies using uv
-# --frozen ensures we use the exact versions from uv.lock
-RUN uv sync --frozen
+# Install dependencies into a specific folder
+RUN uv sync --frozen --no-dev
 
-# Industry Practice: Don't run as root for security
+# Stage 2: Final Image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Sirf zaroori files aur virtual environment copy karna
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/math_ops.py /app/
+
+# Environment path set karna taaki .venv use ho
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Security: Non-root user
 RUN useradd -m appuser
 USER appuser
 
-# This is just a placeholder command since we have a library, not a web app yet
-CMD ["uv", "run", "python", "math_ops.py"]
+CMD ["python", "math_ops.py"]
