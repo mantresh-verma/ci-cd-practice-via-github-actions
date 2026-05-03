@@ -7,26 +7,26 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 COPY . .
 
-# Security Patch: Base image ke purane packages ko upgrade karna
-# Isse wheel aur pip ki vulnerabilities theek ho jayengi
-RUN pip install --upgrade pip setuptools wheel jaraco.context
-
-# Install dependencies into a specific folder
+# Builder stage patch
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel jaraco.context
 RUN uv sync --frozen --no-dev
 
-# Stage 2: Final Image
+# Stage 2: Final
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Builder se patched environment copy karna
+# Final stage patch (Trivy scan isi ko dekhta hai)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel jaraco.context
+
+# Copy artifacts
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/math_ops.py /app/
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH='/app/.venv/bin:$PATH'
 
-# Security: Non-root user
+# Security
 RUN useradd -m appuser
 USER appuser
 
-CMD ["python", "math_ops.py"]
+CMD ['python', 'math_ops.py']
