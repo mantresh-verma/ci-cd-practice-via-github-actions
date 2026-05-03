@@ -143,6 +143,7 @@ jobs:
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           format: "table"
+          output: "trivy-results.txt" # <--- Yeh line miss ho gayi thi!
           exit-code: "1"
           ignore-unfixed: true
           vuln-type: "os,library"
