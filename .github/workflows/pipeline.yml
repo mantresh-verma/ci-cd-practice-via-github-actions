@@ -48,11 +48,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      # Naya Step: Code Formatting Check (Black)
       - name: Check formatting with black
         run: uv run black . --check
 
-      # Naya Step: Import Sorting Check (Isort)
       - name: Check imports with isort
         run: uv run isort . --check-only --profile black
 
@@ -141,7 +139,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           format: "table"
