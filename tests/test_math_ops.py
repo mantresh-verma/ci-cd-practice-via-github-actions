@@ -1,5 +1,6 @@
 import pytest
-from math_ops import add, subtract, multiply, divide
+
+from math_ops import add, divide, multiply, subtract
 
 
 def test_add():
@@ -18,4 +19,3 @@ def test_divide():
     assert divide(10, 2) == 5
     with pytest.raises(ValueError):
         divide(10, 0)
-
